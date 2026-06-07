@@ -5,6 +5,8 @@ import com.google.genai.Client;
 import com.google.genai.types.*;
 import com.kenneth.kwube.dto.response.ResponseDto;
 import com.kenneth.kwube.dto.response.WeatherResponseDto;
+import com.kenneth.kwube.exceptions.GeminiApiException;
+import com.kenneth.kwube.exceptions.WeatherApiException;
 import com.kenneth.kwube.services.AIService;
 import com.kenneth.kwube.services.WeatherService;
 import lombok.RequiredArgsConstructor;
@@ -54,13 +56,10 @@ public class AIServiceImpl implements AIService {
                 dto.setResult(weatherResponseString);
             }
             return dto;
+        } catch (WeatherApiException e){
+            throw e;
         } catch (Exception e){
-            return ResponseDto.builder() //write a custom exception for this
-                    .igboText(igboText)
-                    .translation("error")
-                    .intention("error")
-                    .result("Something went wrong: " + e.getMessage())
-                    .build();
+        throw new GeminiApiException("Gemini API Call Failed: " + e.getMessage());
         }
     }
 }
