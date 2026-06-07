@@ -8,6 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@ToString
 public class CurrentDto {
     private ConditionDto condition;
     @JsonProperty("temp_c")

@@ -7,6 +7,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@ToString
 public class WeatherResponseDto {
     private LocationDto location;
     private CurrentDto current;

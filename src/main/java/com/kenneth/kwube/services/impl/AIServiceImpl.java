@@ -11,8 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
-import java.lang.reflect.Method;
 
 @Service
 @RequiredArgsConstructor
@@ -20,49 +18,42 @@ public class AIServiceImpl implements AIService {
 
     private final WeatherService weatherService;
 
-    @Value("${kwube.gemini.key")
+    @Value("${kwube.geminiapi.key}")
     private String geminiApiKey;
-
-    private static WeatherService staticWeatherService;
-
-    @PostConstruct
-    public void init(){
-        staticWeatherService = this.weatherService;
-    }
-
-    public static String getCurrentWeather(String location) {
-        WeatherResponseDto response = staticWeatherService.getCurrentWeather(location);
-        return "Location: " + response.getLocation().getName()
-                + ", " + response.getLocation().getCountry()
-                + " | Temperature: " + response.getCurrent().getTempC() + "°C"
-                + " | Condition: " + response.getCurrent().getCondition().getText();
-    }
 
     @Override
     public ResponseDto chat(String igboText) {
         try(Client client = Client.builder().apiKey(geminiApiKey).build()){
-            Method weatherMethod = AIServiceImpl.class.getMethod("getCurrentWeather", String.class);
             GenerateContentConfig config = GenerateContentConfig.builder()
-                    .tools(Tool.builder().functions(weatherMethod))
-                    .systemInstruction(Content.fromParts(Part.fromText("You are a helpful assistant. " +
-                            "The user will send you text in Igbo language. " +
-                            "Translate it to English, understand the intention, " +
-                            "and respond appropriately. " +
-                            "If the intention is weather-related, use the getCurrentWeather tool. " +
-                            "If it is conversational, reply naturally. " +
-                            "Always respond in this exact JSON format: " +
-                            "{\"igboText\": \"<original>\", \"translation\": \"<english>\", " +
-                            "\"intention\": \"<weather or conversation>\", \"result\": \"<your response>\"}")))
-                    .responseMimeType("application/json")
+                    .systemInstruction(Content.fromParts(Part.fromText(
+                            "You are a helpful assistant. " +
+                                    "The user will send you text in Igbo language. " +
+                                    "Translate it to English and identify the intention as a full descriptive sentence. " +
+                                    "IMPORTANT: You must ALWAYS respond with ONLY raw JSON, no markdown, no code blocks. " +
+                                    "Use this exact format: " +
+                                    "{\"igboText\": \"<original>\", \"translation\": \"<english translation>\", " +
+                                    "\"intention\": \"<full sentence describing what the user wants>\", " +
+                                    "\"result\": \"<if conversational, your response. if weather, just the city name. if currency, just the currency pair e.g USD to NGN>\"}"
+                    )))
                     .build();
 
             GenerateContentResponse response = client.models.generateContent(
-                    "gemini-3.5-flash", igboText, config);
+                    "gemini-2.5-flash", igboText, config);
             String json = response.text();
+            json = json.replaceAll("(?s)```json\\s*", "").replaceAll("(?s)```\\s*", "").trim();
 
             ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(json, ResponseDto.class);
+            ResponseDto dto = mapper.readValue(json, ResponseDto.class);
+            String intention = dto.getIntention().toLowerCase();
 
+            if (intention.contains("weather")){
+                WeatherResponseDto weatherResponse = weatherService.getCurrentWeather(dto.getResult());
+                String weatherResponseString = "Location: " + weatherResponse.getLocation().getName()
+                        + " | Temperature: " + weatherResponse.getCurrent().getTempC() + "°C"
+                        + " | Condition: " + weatherResponse.getCurrent().getCondition().getText();
+                dto.setResult(weatherResponseString);
+            }
+            return dto;
         } catch (Exception e){
             return ResponseDto.builder() //write a custom exception for this
                     .igboText(igboText)
