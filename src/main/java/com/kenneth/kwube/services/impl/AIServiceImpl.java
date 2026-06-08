@@ -27,7 +27,7 @@ public class AIServiceImpl implements AIService {
     @Override
     public ResponseDto chat(String igboText) {
 
-        if(igboText.isEmpty()) throw new BadRequestException("Invalid Request Format");
+        if(igboText.isBlank()) throw new BadRequestException("Invalid Request Format");
 
         try(Client client = Client.builder().apiKey(geminiApiKey).build()){
             GenerateContentConfig config = GenerateContentConfig.builder()

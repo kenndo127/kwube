@@ -2,6 +2,9 @@ package com.kenneth.kwube.exceptions;
 
 import com.kenneth.kwube.dto.response.ErrorReport;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -28,6 +31,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorReport> handleGenericException(Exception e) {
         return buildResponse(500, "An unexpected error occurred");
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorReport> handleValidationException(MethodArgumentNotValidException e) {
+        String message = e.getBindingResult().getFieldErrors()
+                .stream()
+                .map(FieldError::getDefaultMessage)
+                .findFirst()
+                .orElse("Invalid request");
+        return buildResponse(400, message);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorReport> handleUnreadableMessage(HttpMessageNotReadableException e) {
+        return buildResponse(400, "Invalid request format");
     }
 
     private ResponseEntity<ErrorReport> buildResponse(int status, String message) {
