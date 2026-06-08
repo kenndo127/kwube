@@ -44,7 +44,7 @@ public class AIServiceImpl implements AIService {
                     .build();
 
             GenerateContentResponse response = client.models.generateContent(
-                    "gemini-2.5-flash", igboText, config);
+                    "gemini-2.5-flash-lite", igboText, config);
             String json = response.text();
             json = json.replaceAll("(?s)```json\\s*", "").replaceAll("(?s)```\\s*", "").trim();
 
