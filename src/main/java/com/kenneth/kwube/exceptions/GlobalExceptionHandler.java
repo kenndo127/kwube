@@ -23,6 +23,11 @@ public class GlobalExceptionHandler {
         return buildResponse(502, e.getMessage());
     }
 
+    @ExceptionHandler(ExchangeRateApiException.class)
+    public ResponseEntity<ErrorReport> handleExchangeRateApiException(ExchangeRateApiException e) {
+        return buildResponse(502, e.getMessage());
+    }
+
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorReport> handleBadRequestException(BadRequestException e) {
         return buildResponse(400, e.getMessage());

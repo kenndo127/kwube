@@ -3,12 +3,15 @@ package com.kenneth.kwube.services.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.genai.Client;
 import com.google.genai.types.*;
+import com.kenneth.kwube.dto.response.ExchangeRateResponseDto;
 import com.kenneth.kwube.dto.response.ResponseDto;
 import com.kenneth.kwube.dto.response.WeatherResponseDto;
 import com.kenneth.kwube.exceptions.BadRequestException;
+import com.kenneth.kwube.exceptions.ExchangeRateApiException;
 import com.kenneth.kwube.exceptions.GeminiApiException;
 import com.kenneth.kwube.exceptions.WeatherApiException;
 import com.kenneth.kwube.services.AIService;
+import com.kenneth.kwube.services.ExchangeRateService;
 import com.kenneth.kwube.services.WeatherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +23,7 @@ import org.springframework.stereotype.Service;
 public class AIServiceImpl implements AIService {
 
     private final WeatherService weatherService;
+    private final ExchangeRateService exchangeRateService;
 
     @Value("${kwube.geminiapi.key}")
     private String geminiApiKey;
@@ -39,8 +43,8 @@ public class AIServiceImpl implements AIService {
                                     "Use this exact format: " +
                                     "{\"igboText\": \"<original>\", \"translation\": \"<english translation>\", " +
                                     "\"intention\": \"<full sentence describing what the user wants>\", " +
-                                    "\"result\": \"<if conversational, your response in Igbo. if weather, just the city name. if currency, just the currency pair e.g USD to NGN>\"}"
-                    )))
+                                    "\"result\": \"<if anything other than weather or currency, your response strictly must be in Igbo. if weather, just the city name." +
+                                    "if currency or exchange rate, just the currency pair in this format: BASE to QUOTE e.g USD to NGN>\"}"                    )))
                     .build();
 
             GenerateContentResponse response = client.models.generateContent(
@@ -58,12 +62,22 @@ public class AIServiceImpl implements AIService {
                         + " | Temperature: " + weatherResponse.getCurrent().getTempC() + "°C"
                         + " | Condition: " + weatherResponse.getCurrent().getCondition().getText();
                 dto.setResult(weatherResponseString);
+            } else if (intention.contains("exchange rate") || intention.contains("currency")) {
+                String[] currencies = dto.getResult().split(" to ");
+                String base = currencies[0].trim();
+                String quote = currencies[1].trim();
+                ExchangeRateResponseDto rateResponse = exchangeRateService.fetchExchangeRate(base, quote);
+                Double rate = rateResponse.getConversionRates().get(quote.toUpperCase());
+                dto.setResult("1 " + base.toUpperCase() + " = " + rate + " " + quote.toUpperCase());
             }
             return dto;
         } catch (WeatherApiException e){
             throw e;
-        } catch (Exception e){
-        throw new GeminiApiException("Gemini API Call Failed: " + e.getMessage());
+        } catch (ExchangeRateApiException e){
+            throw e;
+        }
+        catch (Exception e){
+            throw new GeminiApiException("Gemini API Call Failed: " + e.getMessage());
         }
     }
 }
