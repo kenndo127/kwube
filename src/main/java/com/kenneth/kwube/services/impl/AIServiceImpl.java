@@ -5,6 +5,7 @@ import com.google.genai.Client;
 import com.google.genai.types.*;
 import com.kenneth.kwube.dto.response.ResponseDto;
 import com.kenneth.kwube.dto.response.WeatherResponseDto;
+import com.kenneth.kwube.exceptions.BadRequestException;
 import com.kenneth.kwube.exceptions.GeminiApiException;
 import com.kenneth.kwube.exceptions.WeatherApiException;
 import com.kenneth.kwube.services.AIService;
@@ -25,6 +26,9 @@ public class AIServiceImpl implements AIService {
 
     @Override
     public ResponseDto chat(String igboText) {
+
+        if(igboText.isEmpty()) throw new BadRequestException("Invalid Request Format");
+
         try(Client client = Client.builder().apiKey(geminiApiKey).build()){
             GenerateContentConfig config = GenerateContentConfig.builder()
                     .systemInstruction(Content.fromParts(Part.fromText(
@@ -35,7 +39,7 @@ public class AIServiceImpl implements AIService {
                                     "Use this exact format: " +
                                     "{\"igboText\": \"<original>\", \"translation\": \"<english translation>\", " +
                                     "\"intention\": \"<full sentence describing what the user wants>\", " +
-                                    "\"result\": \"<if conversational, your response. if weather, just the city name. if currency, just the currency pair e.g USD to NGN>\"}"
+                                    "\"result\": \"<if conversational, your response in Igbo. if weather, just the city name. if currency, just the currency pair e.g USD to NGN>\"}"
                     )))
                     .build();
 
