@@ -13,7 +13,7 @@ public class ElevenLabsServiceImpl implements ElevenLabsService {
 
     private final ElevenLabsClient elevenLabsClient;
 
-    @Value("${kwube.elevenlabs.key}")
+    @Value("${kwube.elevenlabsapi.key}")
     private String apiKey;
 
     @Value("${kwube.elevenlabs.voiceid}")
