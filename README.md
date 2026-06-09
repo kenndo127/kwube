@@ -291,6 +291,5 @@ MIT License. See the `LICENSE` file for details.
 
 Computer Science Student | Backend Developer | NLP Enthusiast
 
-GitHub: [kenndo127](https://github.com/kenndo127)
 
-LinkedIn: [Kenneth Okechukwu](https://linkedin.com/in/kenneth-okechukwu)
+LinkedIn: [Kenneth Okechukwu](www.linkedin.com/in/kenneth-okechukwu-155095222)
