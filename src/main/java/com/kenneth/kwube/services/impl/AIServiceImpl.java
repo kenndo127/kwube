@@ -6,16 +6,16 @@ import com.google.genai.types.*;
 import com.kenneth.kwube.dto.response.ExchangeRateResponseDto;
 import com.kenneth.kwube.dto.response.ResponseDto;
 import com.kenneth.kwube.dto.response.WeatherResponseDto;
-import com.kenneth.kwube.exceptions.BadRequestException;
-import com.kenneth.kwube.exceptions.ExchangeRateApiException;
-import com.kenneth.kwube.exceptions.GeminiApiException;
-import com.kenneth.kwube.exceptions.WeatherApiException;
+import com.kenneth.kwube.exceptions.*;
 import com.kenneth.kwube.services.AIService;
+import com.kenneth.kwube.services.ElevenLabsService;
 import com.kenneth.kwube.services.ExchangeRateService;
 import com.kenneth.kwube.services.WeatherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.util.Base64;
 
 
 @Service
@@ -24,6 +24,7 @@ public class AIServiceImpl implements AIService {
 
     private final WeatherService weatherService;
     private final ExchangeRateService exchangeRateService;
+    private final ElevenLabsService elevenLabsService;
 
     @Value("${kwube.geminiapi.key}")
     private String geminiApiKey;
@@ -70,13 +71,23 @@ public class AIServiceImpl implements AIService {
                 Double rate = rateResponse.getConversionRates().get(quote.toUpperCase());
                 dto.setResult("1 " + base.toUpperCase() + " = " + rate + " " + quote.toUpperCase());
             }
+
+            GenerateContentResponse igboResponse = client.models.generateContent(
+                    "gemini-2.5-flash-lite",
+                    "Convert this to a natural spoken Igbo sentence, return only the Igbo text, nothing else: " + dto.getResult(),
+                    null);
+            String igboSpeechText = igboResponse.text();
+            dto.setResult(igboSpeechText); // returns igbo text to the result instead of igbo
+
+
+            byte[] audioBytes = elevenLabsService.textToSpeech(igboSpeechText);
+            String base64Audio = Base64.getEncoder().encodeToString(audioBytes);
+            dto.setAudio(base64Audio);
+
             return dto;
-        } catch (WeatherApiException e){
+        } catch (WeatherApiException | ExchangeRateApiException | ElevenLabsApiException e){
             throw e;
-        } catch (ExchangeRateApiException e){
-            throw e;
-        }
-        catch (Exception e){
+        } catch (Exception e){
             throw new GeminiApiException("Gemini API Call Failed: " + e.getMessage());
         }
     }
