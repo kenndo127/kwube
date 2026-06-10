@@ -1,6 +1,9 @@
 [build]
 builder = "NIXPACKS"
 
+[build.env]
+RAILPACK_JDK_VERSION = "21"
+
 [deploy]
 startCommand = "java -jar target/*.jar"
 healthcheckPath = "/actuator/health"
