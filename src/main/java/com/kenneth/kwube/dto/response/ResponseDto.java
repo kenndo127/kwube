@@ -13,5 +13,4 @@ public class ResponseDto {
     private String translation;
     private String intention;
     private String result;
-    private String audio;
 }
