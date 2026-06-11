@@ -28,9 +28,9 @@ public class GlobalExceptionHandler {
         return buildResponse(502, e.getMessage());
     }
 
-    @ExceptionHandler(ElevenLabsApiException.class)
-    public ResponseEntity<ErrorReport> handleElevenLabsApiException(ElevenLabsApiException e) {
-        return buildResponse(502, e.getMessage());
+    @ExceptionHandler(InternalServerException.class)
+    public ResponseEntity<ErrorReport> handleInternalServerException(InternalServerException e) {
+        return buildResponse(500, e.getMessage());
     }
 
     @ExceptionHandler(BadRequestException.class)

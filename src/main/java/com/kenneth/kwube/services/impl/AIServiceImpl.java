@@ -75,10 +75,10 @@ public class AIServiceImpl implements AIService {
             dto.setResult(igboSpeechText);
 
             return dto;
-        } catch (WeatherApiException | ExchangeRateApiException e){
+        } catch (WeatherApiException | ExchangeRateApiException | GeminiApiException e){
             throw e;
         } catch (Exception e){
-            throw new GeminiApiException("Gemini API Call Failed: " + e.getMessage());
+            throw new InternalServerException("Unexpected Error: " + e.getMessage());
         }
     }
 }
