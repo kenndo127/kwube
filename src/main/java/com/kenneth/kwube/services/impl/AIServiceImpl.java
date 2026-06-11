@@ -8,15 +8,11 @@ import com.kenneth.kwube.dto.response.ResponseDto;
 import com.kenneth.kwube.dto.response.WeatherResponseDto;
 import com.kenneth.kwube.exceptions.*;
 import com.kenneth.kwube.services.AIService;
-import com.kenneth.kwube.services.ElevenLabsService;
 import com.kenneth.kwube.services.ExchangeRateService;
 import com.kenneth.kwube.services.WeatherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.util.Base64;
-
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +20,6 @@ public class AIServiceImpl implements AIService {
 
     private final WeatherService weatherService;
     private final ExchangeRateService exchangeRateService;
-    private final ElevenLabsService elevenLabsService;
 
     @Value("${kwube.geminiapi.key}")
     private String geminiApiKey;
@@ -77,15 +72,10 @@ public class AIServiceImpl implements AIService {
                     "Convert this to a natural spoken Igbo sentence, return only the Igbo text, nothing else: " + dto.getResult(),
                     null);
             String igboSpeechText = igboResponse.text();
-            dto.setResult(igboSpeechText); // returns igbo text to the result instead of igbo
-
-
-            byte[] audioBytes = elevenLabsService.textToSpeech(igboSpeechText);
-            String base64Audio = Base64.getEncoder().encodeToString(audioBytes);
-            dto.setAudio(base64Audio);
+            dto.setResult(igboSpeechText);
 
             return dto;
-        } catch (WeatherApiException | ExchangeRateApiException | ElevenLabsApiException e){
+        } catch (WeatherApiException | ExchangeRateApiException e){
             throw e;
         } catch (Exception e){
             throw new GeminiApiException("Gemini API Call Failed: " + e.getMessage());
